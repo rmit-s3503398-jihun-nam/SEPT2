@@ -121,7 +121,8 @@
 
       getCityData(url)
       {	
-          var self = this;
+          var self = this;     
+
           this.setState({
             url:url
           })
@@ -563,13 +564,13 @@
 
                         console.log(url);
 
-                        // var win = makeNewWindow(600,680);
+                         var win = makeNewWindow(600,680);
 
-                        // $("#stateModal").append(win.fadeIn());
+                        $("#stateModal").append(win.fadeIn());
 
-                        // self.refs["CityComponent"].showLoading();
+                        self.refs["CityComponent"].showLoading();
  
-                        // self.refs["CityComponent"].getCityData(url);				            
+                       self.refs["CityComponent"].getCityData(url);				            
                         		 
                    }  
 
