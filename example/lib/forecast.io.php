@@ -262,12 +262,6 @@ class ForecastIOConditions
         return $this->raw_data->temperature;
 
     }
-
-    function getLocation()
-    {
-        return $this->raw_data->localeconv;
-    }
-
    
     /**
      * get the min temperature
@@ -351,9 +345,7 @@ class ForecastIOConditions
         } else {
 
             return date($format, $this->raw_data->time);
-
         }
-
     }
 
     /**
