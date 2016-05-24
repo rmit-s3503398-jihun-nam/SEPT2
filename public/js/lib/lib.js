@@ -10,6 +10,81 @@
 
   	  return {
 
+
+      parseData:function(data)
+      {
+
+         var object = {
+
+            "observations":{
+
+              "header":[],
+              "data":[]
+
+            }
+
+         }
+
+         if(data.currently)
+         {    
+              // forecast.io data
+
+             var dt = new Date(data.currently.time*1000);
+             var localTime = dt.toLocaleString();
+
+              object.observations.header.push({
+                "refresh_message":localTime,
+                "cloud":data.currently.cloudCover,
+                "rel_hum":  data.currently.humidity,
+                "air_temp": Number((5/9) * (data.currently.temperature-32)).toFixed(2),
+                "wind_spd_kmh": data.currently.windSpeed
+              });
+ 
+              for(var i=0;i<data.hourly.data.length;i++)
+              {
+                  object.observations.data.push({
+
+                  "local_date_time": new Date(data.hourly.data[i].time*1000).toLocaleString(),
+                  "apparent_t": Number((5/9) * (data.hourly.data[i].apparentTemperature-32)).toFixed(2),  
+                  "air_temp":Number((5/9) * (data.hourly.data[i].temperature-32)).toFixed(2)
+
+                  });
+              }
+
+
+         }
+       else
+         {
+             
+             var dataLength = data.list.length;
+             var dt = new Date(data.list[0].dt*1000);
+             var localTime = dt.toLocaleString();
+
+              object.observations.header.push({
+                "refresh_message":localTime,
+                "cloud":data.list[0].clouds.all,
+                "rel_hum":  data.list[0].main.humidity,
+                "air_temp": Number((5/9) * (data.list[0].main.temp-32)).toFixed(2),
+                "wind_spd_kmh": data.list[0].wind.speed
+              });
+ 
+              for(var i=0;i<dataLength;i++)
+              {
+                  object.observations.data.push({
+
+                  "local_date_time": new Date(data.list[i].dt*1000).toLocaleString(),
+                  "apparent_t": Number((5/9) * (data.list[i].main.temp-32)).toFixed(2),  
+                  "air_temp":Number((5/9) * (data.list[i].main.temp-32)).toFixed(2)
+
+                  });
+              }
+
+         }  
+ 
+            return object;
+ 
+      },    
+
   	getSimpleGragh:function(cityname,data,reactObj,loadingBar,numberofData,chartHolerName,currentCity)
   	{
 			        if(data.observations.data.length>0)
