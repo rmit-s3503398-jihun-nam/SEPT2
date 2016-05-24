@@ -220,7 +220,6 @@
 
       refresh(e)
       {
-
           e.preventDefault();          
           var self = this; 
           var url = self.state.url;  
@@ -228,7 +227,6 @@
           var cityname = self.state.city;          
 
           if(info =="BOM"){  
-
           $.ajax({
             
             url:"/WeatherController/getEachStationJSON",
@@ -243,13 +241,11 @@
               module().getSimpleGragh(data,self,self.refs["loadingBar"],7,"myChart"); 
               self.refs["loadingBar"].hide();               
             }
-
           });
-
           }
-          else{
+          else
+          {
           self.refs['loadingBar'].show();
-
 
            $.ajax({
 
@@ -261,20 +257,11 @@
             {
             
               var newObject;
-
-              newObject = module2().parseData(data); 
-
-               /*
-              *  @param self is referencing current react component
-              *  Using chart.js , use received data from OpenWeatherMap site
-              *  Create a graph and display information
-              */
-              
+              newObject = module2().parseData(data);               
               module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
               self.refs["loadingBar"].hide();                    
             }   
           });
-
           }
       },
 
