@@ -119,7 +119,7 @@
           });
       },      
 
-      getCityData(url)
+      getCityData(url,cityname)
       {	
           var self = this;
           this.setState({
@@ -134,7 +134,10 @@
             dataType:"json",
             success:function(data)
             {
+              var newObject;
 
+              newObject = self.parseData(data);
+ 
               /*
               *  @param self is referencing current react component
               *  Using chart.js , use received data from BOM site make
@@ -143,11 +146,85 @@
               *  Make a graph and render it
               */
 
-              module().getSimpleGragh(data,self,self.refs["loadingBar"],7,"myChart"); 
+              module().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
               self.refs["loadingBar"].hide();                 
             }   
           });
       }, 
+
+      parseData(data)
+      {
+
+         var object = {
+
+            "observations":{
+
+              "header":[],
+              "data":[]
+
+            }
+
+         }
+
+         if(data.currently)
+         {    
+              // forecast.io data
+
+             var dt = new Date(data.currently.time*1000);
+             var localTime = dt.toLocaleString();
+
+              object.observations.header.push({
+                "refresh_message":localTime,
+                "cloud":data.currently.cloudCover,
+                "rel_hum":  data.currently.humidity,
+                "air_temp": Number((5/9) * (data.currently.temperature-32)).toFixed(2),
+                "wind_spd_kmh": data.currently.windSpeed
+              });
+ 
+              for(var i=0;i<data.hourly.data.length;i++)
+              {
+                  object.observations.data.push({
+
+                  "local_date_time": new Date(data.hourly.data[i].time*1000).toLocaleString(),
+                  "apparent_t": Number((5/9) * (data.hourly.data[i].apparentTemperature-32)).toFixed(2),  
+                  "air_temp":Number((5/9) * (data.hourly.data[i].temperature-32)).toFixed(2)
+
+                  });
+              }
+
+
+         }
+       else
+         {
+             
+             var dataLength = data.list.length;
+             var dt = new Date(data.list[0].dt*1000);
+             var localTime = dt.toLocaleString();
+
+              object.observations.header.push({
+                "refresh_message":localTime,
+                "cloud":data.list[0].clouds.all,
+                "rel_hum":  data.list[0].main.humidity,
+                "air_temp": Number((5/9) * (data.list[0].main.temp-32)).toFixed(2),
+                "wind_spd_kmh": data.list[0].wind.speed
+              });
+ 
+              for(var i=0;i<dataLength;i++)
+              {
+                  object.observations.data.push({
+
+                  "local_date_time": new Date(data.list[i].dt*1000).toLocaleString(),
+                  "apparent_t": Number((5/9) * (data.list[i].main.temp-32)).toFixed(2),  
+                  "air_temp":Number((5/9) * (data.list[i].main.temp-32)).toFixed(2)
+
+                  });
+              }
+
+         }  
+ 
+            return object;
+ 
+      },
 
       refresh(e)
       {
@@ -457,7 +534,7 @@
                         var forecast_io = "https://api.forecast.io/forecast/ce608d65c49616e17f2994b31a5f5c18/"+lat+","+lon;
                         var openweathermap = "http://api.openweathermap.org/data/2.5/forecast?lat=" + lat +"&lon=" + lon +"&APPID=475769fb9b0f81f6d88460f19de4c169"; 
 
-                        var tr = $("<tr><td class='col-md-9'>"+data.stations[i+j].city+"<div class='viewOptionDIV'><h4>We bring your weather data from</h4><button class='btn btn-default forecastButton' id="+forecast_io+">Forecast.io</button><button class='btn btn-default openweathermapButtons' id="+openweathermap+">Openweathermap</button></div></td><td class='col-md-3'><button id="+data.stations[i+j].url+" class='each_city btn btn-info btn-sm'>View Detail</button></td></tr>");
+                        var tr = $("<tr><td class='col-md-9'><span class='_city_name'>"+data.stations[i+j].city+"</span><div class='viewOptionDIV'><h4>We bring your weather data from</h4><button class='btn btn-default forecastButton' id="+forecast_io+">Forecast.io</button><button class='btn btn-default openweathermapButtons' id="+openweathermap+">Openweathermap</button></div></td><td class='col-md-3'><button id="+data.stations[i+j].url+" class='each_city btn btn-info btn-sm'>View Detail</button></td></tr>");
 						
                         tr_array.push(tr);
 
@@ -561,15 +638,15 @@
 
                         var url = this.id;
 
-                        console.log(url);
+                        var cityname = $(e.target).parent().parent().find("._city_name").html();
 
-                        // var win = makeNewWindow(600,680);
+                        var win = makeNewWindow(600,680);
 
-                        // $("#stateModal").append(win.fadeIn());
+                        $("#stateModal").append(win.fadeIn());
 
-                        // self.refs["CityComponent"].showLoading();
+                        self.refs["CityComponent"].showLoading();
  
-                        // self.refs["CityComponent"].getCityData(url);				            
+                        self.refs["CityComponent"].getCityData(url,cityname);				            
                         		 
                    }  
 

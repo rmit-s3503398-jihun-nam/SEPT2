@@ -10,21 +10,20 @@
 
   	  return {
 
-  	getSimpleGragh:function(data,reactObj,loadingBar,numberofData,chartHolerName,currentCity)
+  	getSimpleGragh:function(cityname,data,reactObj,loadingBar,numberofData,chartHolerName,currentCity)
   	{
- 
 			        if(data.observations.data.length>0)
               {
  
                 var header = data.observations.header[0];
-                var time = header.refresh_message.substr(header.refresh_message.indexOf("Issued at")+10,9).trim();
-                var date = header.refresh_message.substr(header.refresh_message.indexOf("m")+6).trim();
+                var time = header.refresh_message.split(",")[1];
+                var date = header.refresh_message.split(",")[0];
                 var city = header.name;
                 var state = header.state;
-                var cloudy = data.observations.data[0].cloud==undefined?"":data.observations.data[0].cloud;
-                var humidity = data.observations.data[0].rel_hum;
-                var temp = data.observations.data[0].air_temp;
-                var wind = data.observations.data[0].wind_spd_kmh;
+                var cloudy = header.cloud==undefined?"":header.cloud;
+                var humidity = header.rel_hum;
+                var temp = header.air_temp;
+                var wind = header.wind_spd_kmh;
                 var min_temp = data.observations.data[0].air_temp || 0;
                 var max_temp = data.observations.data[0].air_temp || 0;
                 var dataInterval = 0;
@@ -51,12 +50,14 @@
 
                     if(totalDataLength>totalNumberOfData && chartHolerName == "myChart")
                     {
+
                       if(i%dataInterval==0)
                       {
                           dataLabels.push(data.observations.data[i].local_date_time);
                           airTemp.push(data.observations.data[i].air_temp);
                           apparentTemp.push(data.observations.data[i].apparent_t);
                       }
+
                     }
                   else{
 
