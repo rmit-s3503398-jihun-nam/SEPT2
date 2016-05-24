@@ -22,7 +22,6 @@
 <script src="/public/js/lib/lib.js" type="text/javascript"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js" type="text/javascript"></script>
 
-
 <!--
 
   @author: Jihun Nam
