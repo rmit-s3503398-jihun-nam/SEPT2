@@ -18,7 +18,7 @@
                 var header = data.observations.header[0];
                 var time = header.refresh_message.split(",")[1];
                 var date = header.refresh_message.split(",")[0];
-                var city = header.name;
+                var city = cityname;
                 var state = header.state;
                 var cloudy = header.cloud==undefined?"":header.cloud;
                 var humidity = header.rel_hum;
