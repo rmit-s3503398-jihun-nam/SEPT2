@@ -51,7 +51,7 @@
       getInitialState()
       {
           return {
-
+            info:"",
             city:"",
             state:"",
             date:"",
@@ -61,6 +61,7 @@
             wind:"",
             time:"",
             url:"",
+            summary:"",
             min_temp:0,
             max_temp:0,
             dummyDATAURL:[
@@ -84,8 +85,8 @@
 
       addToFavourite(e)
       {
-          e.preventDefault();
-
+          e.preventDefault();      
+                  
           var self = this;
           $.ajax({
             
@@ -93,19 +94,18 @@
             type:"POST",
             data:{
               city:self.state.city,
-              url:self.state.url
+              url:self.state.url            
             },
             success:function(data)
             {
                 if(data==true)
                 {
-                   toastr.success(self.state.city + " has been added to your favourites","Updated successfully");
+                   toastr.success(self.state.city + " has been added to your favourites","Updated successfully");                    
                    self.props.CallFavouriteComponent({
-
                     city:self.state.city,
-                    url:self.state.url
+                    url:self.state.url                                     
                    });
-                  
+                   
                 }
                else if(data==false)
                 {
@@ -119,13 +119,48 @@
           });
       },      
 
-      getCityData(url,cityname)
-      {	
-          var self = this;
+      getCityData(url)
+      { 
+          var self = this;  
+          var info = "BOM";   
           this.setState({
+            info:info,
             url:url
-          })
+          })    
          
+          $.ajax({
+
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {                  
+
+              /*
+              *  @param self is referencing current react component
+              *  Using chart.js , use received data from BOM site make
+              *  an interval if the data objects are more than 10
+              *  last digit is for how many data objects to be shown
+              *  Make a graph and render it
+              */
+
+              module().getSimpleGragh(data,self,self.refs["loadingBar"],7,"myChart"); 
+              self.refs["loadingBar"].hide();                 
+            }   
+          });
+      },     
+
+      getForecastioData(url,cityname){
+
+       var self = this;   
+       self.refs['loadingBar'].show();
+       var info = "Forecast.io";   
+          this.setState({
+            info:info,
+            url:url
+          })            
+     
           $.ajax({
 
             url:"/WeatherController/getEachStationJSON",
@@ -136,28 +171,63 @@
             {
               var newObject;
 
-              newObject = module().parseData(data);
+              newObject = module2().parseData(data);
  
               /*
               *  @param self is referencing current react component
-              *  Using chart.js , use received data from BOM site make
-              *  an interval if the data objects are more than 10
-              *  last digit is for how many data objects to be shown
-              *  Make a graph and render it
+              *  Using chart.js , use received data from Forecast.io site
+              *  Create a graph and display information
               */
 
-              module().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
-              self.refs["loadingBar"].hide();                 
+              module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
+              self.refs["loadingBar"].hide();                    
             }   
           });
-      }, 
+      },
 
+      getOpenWeatherData(url,cityname){
+
+       var self = this;   
+       self.refs['loadingBar'].show();
+       var info = "OpenWeather";   
+          this.setState({
+            info:info,
+            url:url
+          })  
+          
+          $.ajax({
+
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {
+              var newObject;
+
+              newObject = module2().parseData(data); 
+
+               /*
+              *  @param self is referencing current react component
+              *  Using chart.js , use received data from OpenWeatherMap site
+              *  Create a graph and display information
+              */
+             
+              module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
+              self.refs["loadingBar"].hide();                    
+            }   
+          });
+      },
 
       refresh(e)
       {
           e.preventDefault();          
           var self = this; 
-          var url = self.state.url;                
+          var url = self.state.url;  
+          var info = self.state.info;
+          var cityname = self.state.city;          
+
+          if(info =="BOM"){  
           $.ajax({
             
             url:"/WeatherController/getEachStationJSON",
@@ -167,12 +237,32 @@
             },
             dataType:"json",
             success:function(data)
-            {
+            {            
               self.refs['loadingBar'].show();
               module().getSimpleGragh(data,self,self.refs["loadingBar"],7,"myChart"); 
               self.refs["loadingBar"].hide();               
             }
           });
+          }
+          else
+          {
+          self.refs['loadingBar'].show();
+
+           $.ajax({
+
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {            
+              var newObject;
+              newObject = module2().parseData(data);               
+              module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
+              self.refs["loadingBar"].hide();                    
+            }   
+          });
+          }
       },
 
       renderCityByUrl(url,currentCity,date)
@@ -224,9 +314,7 @@
       showPrevCalendar(e)
     {        
         var self = this;
-        var todayDate = new Date().getDate();
-
-                
+        var todayDate = new Date().getDate();                
 
         if($("#hiddenField").css("display")=="none")
         {     
@@ -312,40 +400,92 @@
         {              
             var ran = parsedDate % 9;
             this.renderCityByUrl(this.state.dummyDATAURL[ran],currentCity,date);
-
         } 
-    },
- 
-    
-	      render()
+    },     
+        render()
       
       {
-        return (                
+        return (    
+             
           <div id = "detailsWrap"className='animated fadeIn'>
               <RenderLoading ref='loadingBar'/>           
                <div className="cityInfoWrapper">
-                 <p className="city">                 		
-                		 <button onClick={this.addToFavourite} className='add_to_favourite btn btn-default btn-sm'>Add to Favourite</button>
-        				 &nbsp;
-				        <button onClick={this.refresh} className='add_to_favourite btn btn-default btn-sm'>Refresh</button>				        
-				        <br/>
-				        {this.state.city}	
+                 <p className="city">    
+                 <span className="infoID">
+                {(() => {
+                    switch (this.state.info){
+                    case "BOM" : return "Information from BOM";
+                    case "Forecast.io" : return "Information from Forecast.io";   
+                    case "OpenWeather" : return "Information from OpenWeatherMap.org";         
+                  }
+                  })()} </span>                 
+                     <button onClick={this.addToFavourite} className='add_to_favourite btn btn-default btn-sm'>Add to Favourite</button>
+                 &nbsp;
+                <button onClick={this.refresh} className='add_to_favourite btn btn-default btn-sm'>Refresh</button>
+                <br/>
+                <p className="stateID">{this.state.city}</p>
                  </p>
                     <div id="hiddenField"></div>
                     <div id="hiddenField2"></div>
+
                 <button type="button" onClick={this.showPrevCalendar} className="btn btn-default favouriteLeftButton" aria-label="Left Align">
                 <span className="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous Days</button>
                 <button type="button" onClick={this.showNextCalendar} className="btn btn-default favouriteRightButton" aria-label="Left Align">Forecasts
                 <span className="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                 </button>
+
                  <p className="date">{this.state.date} <span className="time">{this.state.time}</span></p> 
-                 <p className="cloudy">{ this.state.cloudy=="-"?"": this.state.cloudy }</p> 
-                 <p className="humidity">{this.state.humidity==null?"":"Humidity " + this.state.humidity +"%"}</p> 
-                 <p className="temp">{this.state.temp==null?"":"Temp " + this.state.temp +" C"}</p> 
-                 <p className="wind">{this.state.wind==0?"":"Wind " + this.state.wind}</p> 
+
+                 <p className="summary">
+                 {(() => {
+                    switch (this.state.info){                  
+                    case "Forecast.io" : return this.state.summary==""?"":"Summary : " + this.state.summary; 
+                    case "OpenWeather" : return this.state.summary==""?"":"Summary : " + this.state.summary;           
+                  }
+                  })()} 
+
+                 </p>
+                 <p className="cloudy">
+                 {(() => {
+                    switch (this.state.info){
+                    case "BOM" : return   this.state.cloudy=="-"?"": "Summary :" + this.state.cloudy;
+                    case "Forecast.io" : return this.state.cloudy=="-"?"":"Cloud Cover : " + this.state.cloudy; 
+                    case "OpenWeather" : return this.state.cloudy=="-"?"":"Cloud Cover : " + this.state.cloudy;           
+                  }
+                  })()} 
+
+                 </p> 
+                 <p className="humidity">
+                   {(() => {
+                    switch (this.state.info){
+                    case "BOM" : return   this.state.humidity==null?"":"Humidity : " + this.state.humidity +"%";
+                    case "Forecast.io" : return this.state.humidity==null?"":"Humidity : " + this.state.humidity +"%";   
+                    case "OpenWeather" : return this.state.humidity==null?"":"Humidity : " + this.state.humidity +"%";         
+                  }
+                  })()} 
+                 </p> 
+                 <p className="temp">
+                   {(() => {
+                    switch (this.state.info){
+                    case "BOM" : return   this.state.temp==null?"":"Temp : " + this.state.temp +" C";
+                    case "Forecast.io" : return this.state.temp==null?"":"Current Temp : " + this.state.temp +" C"; 
+                    case "OpenWeather" : return this.state.temp==null?"":"Current Temp : " + this.state.temp +" Fahrenheit";  
+                  }
+                  })()} 
+                 </p> 
+                 <p className="wind">
+                    {(() => {
+                    switch (this.state.info){
+                    case "BOM" : return   this.state.wind==0?"":"Wind : " + this.state.wind + " KM per hour";
+                    case "Forecast.io" : return this.state.wind==0?"":"Current Wind : " + this.state.wind + " KM per hour"; 
+                    case "OpenWeather" : return this.state.wind==0?"":"Current Wind : " + this.state.wind + " Miles per hour";                               
+                  }
+                  })()} 
+                 </p> 
               </div>
               <canvas id="myChart" width="570" height="330"></canvas>
-          </div> 
+          </div>
+          
           );
       },
   });
@@ -355,8 +495,8 @@
     getInitialState()
       {
           return {
-	            buttonClicked:"",
-	            is_logged_in:false
+              buttonClicked:"",
+              is_logged_in:false
           }
       },
 
@@ -451,9 +591,7 @@
                     var tr_array = [];
  
                     for(var j=0;j<pageSeparateNum;j++)
-                    {
-                        //https://api.forecast.io/forecast/ce608d65c49616e17f2994b31a5f5c18/-66.73,112.83
-                        //http://api.openweathermap.org/data/2.5/forecast?lat=-66.6&lon=110.7&APPID=475769fb9b0f81f6d88460f19de4c169
+                    {                        
 
                         var lat = (data.stations[i+j].lat).trim();
                         var lon = (data.stations[i+j].lon).trim();
@@ -461,8 +599,8 @@
                         var forecast_io = "https://api.forecast.io/forecast/ce608d65c49616e17f2994b31a5f5c18/"+lat+","+lon;
                         var openweathermap = "http://api.openweathermap.org/data/2.5/forecast?lat=" + lat +"&lon=" + lon +"&APPID=475769fb9b0f81f6d88460f19de4c169"; 
 
-                        var tr = $("<tr><td class='col-md-9'><span class='_city_name'>"+data.stations[i+j].city+"</span><div class='viewOptionDIV'><h4>We bring your weather data from</h4><button class='btn btn-default forecastButton' id="+forecast_io+">Forecast.io</button><button class='btn btn-default openweathermapButtons' id="+openweathermap+">Openweathermap</button></div></td><td class='col-md-3'><button id="+data.stations[i+j].url+" class='each_city btn btn-info btn-sm'>View Detail</button></td></tr>");
-						
+                        var tr = $("<tr><td class='col-md-9'><span class='_city_name'>"+data.stations[i+j].city+"</span><div class='viewOptionDIV'><h4>Get weather information from</h4><button class='btn btn-default forecastButton' id="+forecast_io+">Forecast.io</button><button class='btn btn-default openweathermapButtons' id="+openweathermap+">OpenWeatherMap.org</button></div></td><td class='col-md-3'><button id="+data.stations[i+j].url+" class='each_city btn btn-info btn-sm'>View Detail</button><div class='viewOptionDIV'><button class='btn btn-default Close' >Close</button></div></td></tr>");
+            
                         tr_array.push(tr);
 
                         if(data.stations.length-1==(i+j))
@@ -521,20 +659,30 @@
 
                       for(var i=0;i<buttons.length;i++)
                       {
-                          (function(i){
-
+                          (function(i){                            
+                            buttons[i].addEventListener('click',viewDetailFunc);
                             buttons[i].addEventListener('click',viewToggle);
 
                           })(i)
                       }
 
+                     var buttons = document.getElementsByClassName('Close');
+
+                      for(var i=0;i<buttons.length;i++)
+                      {
+                          (function(i){                            
+                            
+                            buttons[i].addEventListener('click',closeDiv);
+
+                          })(i)
+                      }
                     var forecastbuttons = document.getElementsByClassName('forecastButton');
 
                       for(var i=0;i<forecastbuttons.length;i++)
                       {
                           (function(i){
 
-                            forecastbuttons[i].addEventListener('click',viewDetailFunc);
+                            forecastbuttons[i].addEventListener('click',viewDetailForecastio);
 
                           })(i)
                       }
@@ -545,7 +693,7 @@
                       {
                           (function(i){
 
-                            openMapbuttons[i].addEventListener('click',viewDetailFunc);
+                            openMapbuttons[i].addEventListener('click',viewDetailOpenWeather);
 
                           })(i)
                       }
@@ -555,26 +703,74 @@
                } 
 
                function viewToggle(e)
-               {
-                   $(e.target).parent().parent().find("div").toggle();
+               {    
+                   $(".viewOptionDIV").css("display","none");
+                  $(e.target).parent().parent().find("div").show();
+               
+
+               }
+
+                function closeDiv(e)
+               {    
+                   $(".viewOptionDIV").css("display","none");   
+               
                }
 
                    function viewDetailFunc(e)
                    {
+                        
                         e.preventDefault();
 
                         var url = this.id;
 
-                        var cityname = $(e.target).parent().parent().find("._city_name").html();
+                        console.log(url);
 
-                        var win = makeNewWindow(600,680);
+                         var win = makeNewWindow(600,680);
 
                         $("#stateModal").append(win.fadeIn());
 
                         self.refs["CityComponent"].showLoading();
  
-                        self.refs["CityComponent"].getCityData(url,cityname);				            
-                        		 
+                       self.refs["CityComponent"].getCityData(url);                   
+                             
+                   }  
+
+                   function viewDetailForecastio(e)
+                   {
+                          
+                        e.preventDefault();
+
+                        var url = this.id;                       
+
+                        var cityname = $(e.target).parent().parent().find("._city_name").html();                    
+
+                        var win = makeNewWindow(600,680);
+
+                       $("#stateModal").append(win.fadeIn());
+
+                      self.refs["CityComponent"].showLoading();
+ 
+                       self.refs["CityComponent"].getForecastioData(url,cityname);                   
+                             
+                   }  
+
+                   function viewDetailOpenWeather(e)
+                   {
+                          
+                        e.preventDefault();
+
+                        var url = this.id;                       
+
+                        var cityname = $(e.target).parent().parent().find("._city_name").html();                      
+
+                        var win = makeNewWindow(600,680);
+
+                       $("#stateModal").append(win.fadeIn());
+
+                      self.refs["CityComponent"].showLoading();
+ 
+                       self.refs["CityComponent"].getOpenWeatherData(url,cityname);                   
+                             
                    }  
 
                    function getUrl(e){
@@ -704,7 +900,7 @@
           $(".register_input_div").addClass("has-error");  
                  
        }
-	     
+       
 
        if(buttonStatus != "")
        {
@@ -736,28 +932,28 @@
                   if(buttonStatus=="login" && data==value)
                   {
                       self.refs["FavouriteComponent"].updateFavourites();
-						          toastr.success("Login Successful");
-          						self.setState({
-          							is_logged_in:true
-          				     });
-				     
+                      toastr.success("Login Successful");
+                      self.setState({
+                        is_logged_in:true
+                       });
+             
                    $(".common_submit_button").html("Select");
                    $(".register_input").hide();
-				           $('#loginUser').html('Successfully Logged in as ' + data);
+                   $('#loginUser').html('Successfully Logged in as ' + data);
                   }
-			         	 
+                 
 
-				           if(buttonStatus=="login" && data!=value)
+                   if(buttonStatus=="login" && data!=value)
                   {
 
-          				  toastr.error("Login Unsuccessful. Please Register First.");
+                    toastr.error("Login Unsuccessful. Please Register First.");
                     $('#loginUser').html("Login Unsuccessful.");
-          				} 				  			  
+                  }                   
 
                   if(buttonStatus=="register"&& data == "Registration Successful")
                   {
                      toastr.success("Your account has been created. You can log in now.");
-              			  $('#loginUser').html(data);
+                      $('#loginUser').html(data);
                   }
 
                   if(buttonStatus=="register"&& data != "Registration Successful"){
@@ -775,7 +971,7 @@
                    
                    $(".common_submit_button").html("Select");
                    $(".register_input").show();
-				           $('#loginUser').html(data);
+                   $('#loginUser').html(data);
                   }
               }
             })
@@ -783,8 +979,8 @@
        
     },
  
-  	render()
-  	{
+    render()
+    {
 
    var dropMenu;
 
@@ -803,9 +999,9 @@
       </ul>
 
    } 
-  		return(
+      return(
 
-  			<div>
+        <div>
 <nav className="navbar navbar-default navbar-static-top">
   <div className="container">
   <div id="loginUser"></div>   
@@ -884,8 +1080,8 @@
             </div>
           </div>
         </div>
-  			);
-  	}
+        );
+    }
 
   });
 
@@ -956,6 +1152,17 @@
             wind:"",
             time:"",
             url:"",
+            _temp:false,
+            _hum:false,
+            _wind:false,
+            _cloud:false,
+            _pressure:false,
+            _temp_arr:[],
+            _hum_arr:[],
+            _wind_arr:[],
+            _cloud_arr:[],
+            _pressure_arr:[],
+            _label_arr:[],
             min_temp:0,
             max_temp:0,   
             dummyDATAURL:[
@@ -976,14 +1183,35 @@
     {
           e.preventDefault();
 
-          var url = e.target.id
-          var self = this;
+          var url = e.target.id;   
+          var city = e.target.name;           
+          var self = this;      
+
+          var bom = url.indexOf("bom.gov.au");
+          var forecast = url.indexOf("api.forecast.io");
+          var openweather = url.indexOf("openweathermap.org");
+          var info;
+       
+          if(bom != -1){
+            info = "BOM";
+          }
+
+          if(forecast != -1){
+            info = "Forecast.io";
+          }
+
+          if(openweather != -1){
+            info = "OpenWeather";
+          }          
  
           this.setState({
-            url:url
-          });
+            url:url,
+            info:info,
+            city:city                 
+          });     
 
-          this.renderCityByUrl(url);
+
+          this.renderCityByUrl(url,info,city);
 
           setTimeout(function(){
 
@@ -993,10 +1221,110 @@
  
     },
 
-    renderCityByUrl(url,currentCity)
+      refreshDetail(e)
+      {
+          e.preventDefault();          
+          var self = this; 
+          var url = self.state.url;  
+          var info = self.state.info;
+          var cityname = self.state.city;                   
+
+          if(info =="BOM"){  
+          $.ajax({
+            
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{             
+              url:url
+            },
+            dataType:"json",
+            success:function(data)
+            {            
+              self.refs['loadingBar'].show();
+              module().getSimpleGragh(data,self,self.refs["loadingBar"],50,"CityDetailChart"); 
+              self.refs["loadingBar"].hide();               
+            }
+          });
+          }
+          else
+          {         
+
+           $.ajax({
+
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {            
+              self.refs['loadingBar'].show();
+              var newObject;
+              newObject = module2().parseData(data);               
+              module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],50,"CityDetailChart"); 
+              self.refs["loadingBar"].hide();                    
+            }   
+          });
+          }
+      },
+
+    renderCityByUrl(url,info,city,currentCity)
     {
+
+        var self = this;    
+        
+        if(info == "BOM"){   
+
+            $.ajax({
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {
+              if($("#cityDetailsWrapper").css("opacity")!="0.3")
+              {    
+                    var wrapper = $("<div id='cityDetailsWrapper'></div>");
+                    wrapper.css({
+
+                       width:$(window).width(),
+                       height:$(window).height(),
+                       position:"absolute",
+                       background:"#9C9C9C",
+                       top:0,
+                       left:0,
+                       opacity:"0.3",
+
+                    });
+
+                     wrapper.css("z-index",10);
+
+                     $(document.body).append(wrapper.fadeIn());
+              }
+
+              $("#CityChartWrapper").show();      
+
+              self.refs['loadingBar'].show();               
+            
+              module().getSimpleGragh(data,self,null,50,"CityDetailChart",currentCity);
+              self.refs['loadingBar'].hide();
  
-        var self = this;
+              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);           
+
+              $('#cityDetailsWrapper').on("click",closeBackGround);
+
+              function closeBackGround(e)
+              {
+                  e.preventDefault();
+                  $("#CityChartWrapper").hide();
+                  $("#cityDetailsWrapper").remove();  
+              }
+
+         
+            }
+          });
+          }
+
+          if(info == "Forecast.io"){
 
             $.ajax({
 
@@ -1029,18 +1357,16 @@
 
               $("#CityChartWrapper").show();      
 
-              self.refs['loadingBar'].show();        
+              self.refs['loadingBar'].show();  
 
               var newObject;
 
-              newObject = module().parseData(data);
+              newObject = module2().parseData(data);          
 
-              module().getSimpleGragh(self.city,newObject,self,null,50,"CityDetailChart",currentCity);
+              module2().getSimpleGragh(city,newObject,self,null,50,"CityDetailChart",currentCity);
               self.refs['loadingBar'].hide();
  
-              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);
-
-              $(".cityInfoWrapper .refreshButton").on("click",refresh);
+              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);            
 
               $('#cityDetailsWrapper').on("click",closeBackGround);
 
@@ -1052,16 +1378,69 @@
                   $("#cityDetailsWrapper").remove();  
               }
 
-              function refresh(e)
+          
+            }
+          });
+          }
+
+          if(info == "OpenWeather"){
+
+            $.ajax({
+
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {
+              if($("#cityDetailsWrapper").css("opacity")!="0.3")
+              {    
+                    var wrapper = $("<div id='cityDetailsWrapper'></div>");
+                    wrapper.css({
+
+                       width:$(window).width(),
+                       height:$(window).height(),
+                       position:"absolute",
+                       background:"#9C9C9C",
+                       top:0,
+                       left:0,
+                       opacity:"0.3",
+
+                    });
+
+                     wrapper.css("z-index",10);
+
+                     $(document.body).append(wrapper.fadeIn());
+
+              }
+
+              $("#CityChartWrapper").show();      
+
+              self.refs['loadingBar'].show();  
+
+              var newObject;
+
+              newObject = module2().parseData(data);          
+
+              module2().getSimpleGragh(city,newObject,self,null,50,"CityDetailChart",currentCity);
+              self.refs['loadingBar'].hide();
+ 
+              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);              
+
+              $('#cityDetailsWrapper').on("click",closeBackGround);
+
+              function closeBackGround(e)
               {
                   e.preventDefault();
 
-                  self.refs['loadingBar'].show();
-                  module().getSimpleGragh(data,self,null,50,"CityDetailChart",currentCity);
-                  self.refs['loadingBar'].hide();
-              }
+                  $("#CityChartWrapper").hide();
+                  $("#cityDetailsWrapper").remove();  
+              }             
             }
           });
+
+
+          }
     },
 
      renderCityByTheUrl(url,currentCity,date)
@@ -1100,11 +1479,9 @@
 
               $("#CityChartWrapper").show();      
 
-              self.refs['loadingBar'].show();      
+              self.refs['loadingBar'].show();        
 
-
-
-              module().getSimpleGragh(self.city,data,self,null,50,"CityDetailChart",currentCity);
+              module2().getSimpleGragh(self.city,data,self,null,50,"CityDetailChart",currentCity);
               self.refs['loadingBar'].hide(); 
 
               self.setState({
@@ -1281,16 +1658,111 @@
             this.renderCityByTheUrl(this.state.dummyDATAURL[ran],currentCity,date);
         } 
     },
+
+    handleChange(e)
+    {
+        var value = e.target.value;
+
+        this.updateRadio(value);
+
+        var data = [];
+
+        if(value=="_temp")
+        {
+           data = this.state._temp_arr;
+        }
+
+        if(value=="_hum")
+        {
+           data = this.state._hum_arr;
+        }
+
+        if(value=="_wind")
+        {
+           data = this.state._wind_arr;
+        }
+
+        if(value=="_pressure")
+        {
+           data = this.state._pressure_arr;
+        }
+
+        if(value=="_cloud")
+        {
+           data = this.state._cloud_arr;
+        }
+
+
+        module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);
+    },  
+
+    updateRadio(value)
+    {
+        if(value=="_temp")
+        {
+            this.setState({
+               _temp:true,
+               _hum:false,
+               _wind:false,
+               _pressure:false,
+               _cloud:false
+            })
+        }
+      else if(value=="_cloud")
+      {
+            this.setState({
+               _temp:false,
+               _hum:false,
+               _wind:false,
+               _pressure:false,
+               _cloud:true
+            })
+      }   
+      else if(value=="_hum")
+      {
+            this.setState({
+               _temp:false,
+               _hum:true,
+               _wind:false,
+               _pressure:false,
+               _cloud:false
+            })
+      }   
+      else if(value=="_pressure")
+      {
+            this.setState({
+               _temp:false,
+               _hum:false,
+               _wind:false,
+               _pressure:true,
+               _cloud:false
+            })
+      }   
+      else if(value=="_wind")
+      {
+            this.setState({
+               _temp:false,
+               _hum:false,
+               _wind:true,
+               _pressure:false,
+               _cloud:false
+            })
+      }   
+ 
+ 
+
+    },
     
     render()
     {
+
        var myFavourites;
        var self = this; 
 
        if(typeof this.state.myFavourites == "object" && this.state.myFavourites.length>0)
        {
               myFavourites = this.state.myFavourites.map(function(data,index){
-              return <li className="list-group-item" key={index}><a onClick={self.renderCityDetail} className='favouriteLinks' id={data.url} href="#">{data.city}</a><button id={data.city} onClick={self.removeFavor} className='favouritebuttons btn btn-default btn-sm'>Delete</button></li>
+              return <li className="list-group-item" key={index}><a onClick={self.renderCityDetail} className='favouriteLinks' id={data.url} name={data.city} href="#">{data.city}</a><button id={data.city} onClick={self.removeFavor} className='favouritebuttons btn btn-default btn-sm'>Delete</button></li>
           })
        }
         return ( 
@@ -1304,15 +1776,25 @@
               <div id="hiddenField4"></div>     
                 <div className="cityInfoWrapper">  
                   <span className='closeButton'><button className='btn btn-default btn-sm'>Close</button></span>               
-                 <p className="city">{this.state.city}
-                  <span className='refreshButton'><button className='btn btn-default btn-sm'>Refresh</button></span>
+                 <p className="stateID">{this.state.city}
+                  <span className='refreshButton'><button className='btn btn-default btn-sm' onClick={this.refreshDetail}>Refresh</button></span></p>
+                  <p className="city"><span class="infoID">
+                    {(() => {
+                    switch (this.state.info){
+                    case "BOM" : return "This information is recieved from BOM";
+                    case "Forecast.io" : return "This information is recieved from Forecast.io";   
+                    case "OpenWeather" : return "This information is recieved from OpenWeatherMap.org";         
+                  }
+                  })()} </span>  
                  </p>
                    <button type="button" onClick={this.showPrevCalendar} className="btn btn-default favouriteLeftButton" aria-label="Left Align">
                   <span className="glyphicon glyphicon-chevron-left" aria-hidden="true"></span>Previous Days
                   </button>
                  <button type="button" onClick={this.showNextCalendar} className="btn btn-default favouriteRightButton" aria-label="Left Align">Forecasts
                   <span className="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
-                 </button>                 
+                 </button>      
+               <div className="detailsWrapper">  
+                <div className="FavouriteDetails">            
                  <p className="date">{this.state.date} <span className="time">{this.state.time}</span></p> 
                  <p className="cloudy">{ this.state.cloudy=="-"?"": this.state.cloudy }</p> 
                  <p className="humidity">{this.state.humidity==null?"":"Humidity " + this.state.humidity +"%"}</p> 
@@ -1320,6 +1802,30 @@
                  <p className="wind">{this.state.wind==0?"":"Wind " + this.state.wind}</p> 
                  <p className="min_temp">{this.state.min_temp!=0?"Min Temp " + this.state.min_temp : "Min Temp Unknown"}</p> 
                  <p className="max_temp">{this.state.max_temp!=0?"Max Temp " + this.state.max_temp : "Max Temp Unknown"}</p> 
+                 </div>
+
+                 <div className="viewPanel">
+
+                     <div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._hum} onChange={this.handleChange} value="_hum" name="viewPanel"/>Humidity</label>
+                        </div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._wind} onChange={this.handleChange} value="_wind" name="viewPanel"/>Wind</label>
+                        </div>
+                         <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._cloud} onChange={this.handleChange} value="_cloud" name="viewPanel"/>Cloud</label>
+                        </div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._pressure} onChange={this.handleChange} value="_pressure" name="viewPanel"/>Pressure</label>
+                        </div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._temp} onChange={this.handleChange} value="_temp" name="viewPanel"/>Apprent Temperature</label>
+                        </div>
+                     </div>
+
+                 </div>
+                </div>
                  <canvas id="CityDetailChart" width="1000" height="450"></canvas>
               </div>
               </div>
@@ -1482,11 +1988,11 @@
 ReactDOM.render(<MainWrapper/>,document.getElementById('App'));
  
 $(document).ready(function(){
-	$.ajax({ url: "/LoginController/getLogin",
-	        context: document.body,
-	        success: function(data){
-	             $('#loginUser').html(data);	             
-	        }});		  
+  $.ajax({ url: "/LoginController/getLogin",
+          context: document.body,
+          success: function(data){
+               $('#loginUser').html(data);               
+          }});      
 
           $(".container").click(function(){
              $("#hiddenField").css("display","none");
@@ -1510,14 +2016,14 @@ $(document).ready(function(){
 </script>
 </head>
 <body>   
-  	<div class="container-fluid"> 
-	   	<div id="App"></div>	   	
-		   	<footer class="footer">
-		  	  <div class="container">              
-		      <p id="footerFloat2">Copyright &copy; 2016 </p>
+    <div class="container-fluid"> 
+      <div id="App"></div>      
+        <footer class="footer">
+          <div class="container">              
+          <p id="footerFloat2">Copyright &copy; 2016 </p>
           <p id ="footerFloat">Australian Weather App</p>
-		   	  </div> 
-			</footer>
-  	</div>
+          </div> 
+      </footer>
+    </div>
 </body>
 </html>
