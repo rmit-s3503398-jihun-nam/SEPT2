@@ -1411,8 +1411,59 @@
 
         var self = this;
 
+        if(info == "BOM")
+        {   
             $.ajax({
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {
+              if($("#cityDetailsWrapper").css("opacity")!="0.3")
+              {    
+                    var wrapper = $("<div id='cityDetailsWrapper'></div>");
+                    wrapper.css({
 
+                       width:$(window).width(),
+                       height:$(window).height(),
+                       position:"absolute",
+                       background:"#9C9C9C",
+                       top:0,
+                       left:0,
+                       opacity:"0.3",
+
+                    });
+
+                     wrapper.css("z-index",10);
+                     $(document.body).append(wrapper.fadeIn());
+              }
+
+              $("#CityChartWrapper").show();
+              self.refs['loadingBar'].show();               
+            
+              module().getSimpleGragh(data,self,null,50,"CityDetailChart",currentCity);
+              self.refs['loadingBar'].hide();
+
+              self.setState({
+                    date:date
+              }) 
+ 
+              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);           
+
+              $('#cityDetailsWrapper').on("click",closeBackGround);
+
+              function closeBackGround(e)
+              {
+                  e.preventDefault();
+                  $("#CityChartWrapper").hide();
+                  $("#cityDetailsWrapper").remove();  
+              }         
+            }
+          });
+          }else{
+
+          $.ajax({
             url:"/WeatherController/getEachStationJSON",
             type:"POST",
             data:{url:url},
@@ -1437,42 +1488,37 @@
                      wrapper.css("z-index",10);
 
                      $(document.body).append(wrapper.fadeIn());
-
               }
 
-              $("#CityChartWrapper").show();      
+              $("#CityChartWrapper").show(); 
 
-              self.refs['loadingBar'].show();        
+              self.refs['loadingBar'].show();  
 
-              module2().getSimpleGragh(self.city,data,self,null,50,"CityDetailChart",currentCity);
-              self.refs['loadingBar'].hide(); 
+              var newObject;
+
+              newObject = module2().parseData(data);          
+
+              module2().getSimpleGragh(city,newObject,self,null,50,"CityDetailChart",currentCity);
+              self.refs['loadingBar'].hide();
 
               self.setState({
                     date:date
-              })            
+              }) 
  
-              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);
-
-              $(".cityInfoWrapper .refreshButton").on("click",refresh);
+              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);            
 
               $('#cityDetailsWrapper').on("click",closeBackGround);
 
               function closeBackGround(e)
               {
                   e.preventDefault();
+
                   $("#CityChartWrapper").hide();
                   $("#cityDetailsWrapper").remove();  
-              }
-
-              function refresh(e)
-              {
-                  e.preventDefault();
-                  self.refs['loadingBar'].show();
-                  module().getSimpleGragh(data,self,null,50,"CityDetailChart",currentCity);
-                  self.refs['loadingBar'].hide();
-              }
+              }          
             }
           });
+          }       
     },
 
     removeFavor(e)
@@ -1559,8 +1605,6 @@
             $("#hiddenField3").css("display","none");
             $('#hiddenField3').datepicker('setDate', null);
          }  
-
-
     },
 
     showNextCalendar(e)
@@ -1602,16 +1646,15 @@
          var s1 = date.split(' ');  
          var parsedDate = parseInt(s1[1]); 
          var currentCity = {
-
              city:this.state.city,
              state:this.state.state,
              date:this.state.date
-
           };
 
         if(todayDate==parsedDate)
         {
-            this.renderCityByUrl(this.state.url);
+            this.renderCityByUrl(this.state.url,this.state.info,this.state.city);
+            $("#loginUser").html(this.state.info);
         }
        else
         {  
@@ -1713,7 +1756,6 @@
                _value:"_wind"
             })
       }   
-
     },
 
     render()

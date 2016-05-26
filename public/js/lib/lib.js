@@ -261,7 +261,7 @@
                 var city = cityname;
                 var state = header.state;
                 var cloudy = header.cloud==undefined?"":header.cloud;
-				        var summary = header.summary==undefined?"":header.summary;
+				var summary = header.summary==undefined?"":header.summary;
                 var humidity = header.rel_hum;
                 var temp = header.air_temp;
                 var wind = header.wind_spd_kmh;
@@ -299,7 +299,7 @@
                       if(i%dataInterval==0)
                       {
                           dataLabels.push(data.observations.data[i].local_date_time);
-                          airTemp.push(data.observations.data[i].air_temp);
+                          graphData.push(data.observations.data[i].air_temp);
                           apparentTemp.push(data.observations.data[i].apparent_t);
                       }
 
