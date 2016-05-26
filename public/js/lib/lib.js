@@ -228,6 +228,7 @@
 
     getSimpleGragh:function(cityname,data,reactObj,loadingBar,numberofData,chartHolerName,currentCity,viewPanel)
     {
+
           var graphData = [];
 
           if(cityname==null)
@@ -238,7 +239,8 @@
               var dataLabels = numberofData;
           }
         else
-          {  
+          { 
+
               if(data.observations.data.length>0)
               {
  
@@ -286,7 +288,7 @@
                       if(i%dataInterval==0)
                       {
                           dataLabels.push(data.observations.data[i].local_date_time);
-                          airTemp.push(data.observations.data[i].air_temp);
+                          graphData.push(data.observations.data[i].air_temp);
                           apparentTemp.push(data.observations.data[i].apparent_t);
                       }
 
@@ -297,6 +299,8 @@
 
                    if((localTime == DATE) || (localTime=="0"))
                    {
+
+
                        localTime = data.observations.data[i].local_date_time.substring(0,data.observations.data[i].local_date_time.indexOf("/"));
 
                     dataLabels.push(data.observations.data[i].local_date_time);
@@ -306,6 +310,7 @@
                     wind_arr.push(data.observations.data[i].windSpeed);
                     clouds.push(data.observations.data[i].cloudCover);
                     pressures.push(data.observations.data[i].pressure);
+
 
                    }
                  else
@@ -384,7 +389,7 @@
                       }
                   ]
               };
-
+ 
                     weatherData.labels = dataLabels;
                     weatherData.datasets[0].data = graphData;
  
