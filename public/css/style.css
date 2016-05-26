@@ -26,6 +26,33 @@ font-family: "Source Sans Pro","Helvetica Neue",Helvetica,Arial,sans-serif !impo
 	display:none;
 }
 
+.detailsWrapper .FavouriteDetails
+{
+	width:30%;
+	float:left;
+}
+
+.detailsWrapper .viewPanel
+{
+	width:70%;
+	float:left;
+	margin-top:50px;
+	display:none;
+}
+
+.detailsWrapper .ChartDetails
+{
+	width:50%;
+	float:left;
+}
+
+.detailsWrapper .viewPanel2
+{
+	width:50%;
+	float:left;	
+	display:none;
+}
+
 .container-fluid
 {
 	padding:0 !important;
@@ -568,16 +595,4 @@ border-color:#060d13 !important;
 	margin-right:10px;
 }
 
-.detailsWrapper .FavouriteDetails
-{
-	width:30%;
-	float:left;
-}
-
-.detailsWrapper .viewPanel
-{
-	width:70%;
-	float:left;
-	margin-top:50px;
-}
 
