@@ -249,6 +249,7 @@
               chartHolerName = reactObj;
               graphData = loadingBar;
               var dataLabels = numberofData;
+
           }
         else
           {  
@@ -294,13 +295,19 @@
                    }
 
                     if(totalDataLength>totalNumberOfData && chartHolerName == "myChart")
-                    {
+                    {	
+					
 
                       if(i%dataInterval==0)
-                      {
+                      {				  
+					  
                           dataLabels.push(data.observations.data[i].local_date_time);
                           graphData.push(data.observations.data[i].air_temp);
                           apparentTemp.push(data.observations.data[i].apparent_t);
+						  humidity_arr.push(data.observations.data[i].humidity);
+						  wind_arr.push(data.observations.data[i].windSpeed);
+						  clouds.push(data.observations.data[i].cloudCover);
+						  pressures.push(data.observations.data[i].pressure);
                       }
 
                     }
@@ -336,7 +343,7 @@
                    date = null;
                }
  
-              if(chartHolerName=="CityDetailChart")
+              if(chartHolerName=="CityDetailChart" || "myChart")
               {
 
                   reactObj.setState({

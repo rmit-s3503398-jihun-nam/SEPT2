@@ -62,6 +62,18 @@
             time:"",
             url:"",
             summary:"",
+            _temp:true,
+            _hum:false,
+            _wind:false,
+            _cloud:false,
+            _pressure:false,
+            _value:"",
+            _temp_arr:[],
+            _hum_arr:[],
+            _wind_arr:[],
+            _cloud_arr:[],
+            _pressure_arr:[],
+            _label_arr:[],
             min_temp:0,
             max_temp:0,
             dummyDATAURL:[
@@ -127,7 +139,9 @@
             info:info,
             url:url
           })    
-         
+
+         $(".viewPanel2").css("display","none");
+
           $.ajax({
 
             url:"/WeatherController/getEachStationJSON",
@@ -158,9 +172,17 @@
        var info = "Forecast.io";   
           this.setState({
             info:info,
-            url:url
+            url:url,             
+            _temp:true,
+            _hum:false,
+            _wind:false,
+            _cloud:false,
+            _pressure:false
+            
           })            
-     
+
+          $(".viewPanel2").css("display","inline");
+
           $.ajax({
 
             url:"/WeatherController/getEachStationJSON",
@@ -170,7 +192,6 @@
             success:function(data)
             {
               var newObject;
-
               newObject = module2().parseData(data);
  
               /*
@@ -180,9 +201,10 @@
               */
 
               module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
-              self.refs["loadingBar"].hide();                    
+              self.refs["loadingBar"].hide();         
             }   
           });
+
       },
 
       getOpenWeatherData(url,cityname){
@@ -194,7 +216,9 @@
             info:info,
             url:url
           })  
-          
+
+          $(".viewPanel2").css("display","none");
+
           $.ajax({
 
             url:"/WeatherController/getEachStationJSON",
@@ -225,8 +249,8 @@
           var self = this; 
           var url = self.state.url;  
           var info = self.state.info;
-          var cityname = self.state.city;          
-
+          var cityname = self.state.city;           
+      
           if(info =="BOM"){  
           $.ajax({
             
@@ -245,9 +269,8 @@
           });
           }
           else
-          {
-          self.refs['loadingBar'].show();
-
+          { 
+          self.refs["loadingBar"].show();
            $.ajax({
 
             url:"/WeatherController/getEachStationJSON",
@@ -257,15 +280,46 @@
             success:function(data)
             {            
               var newObject;
-              newObject = module2().parseData(data);               
-              module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart"); 
+              newObject = module2().parseData(data);
+                            
+              module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],7,"myChart");               
               self.refs["loadingBar"].hide();                    
             }   
-          });
-          }
-      },
+          }); 
+          this.setState({
+                  _temp:true,
+                  _hum:false,
+                  _wind:false,
+                  _cloud:false,
+                  _pressure:false
+          })
+                     
+          }          
+          self.refs["loadingBar"].hide();
+          
+      },   
 
-      renderCityByUrl(url,currentCity,date)
+      renderCityByUrl(url,currentCity)
+    {
+
+        var self = this;
+
+            $.ajax({
+
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {
+              self.refs['loadingBar'].show();
+              module().getSimpleGragh(data,self,null,7,"myChart",currentCity);               
+              self.refs["loadingBar"].hide();             
+            }
+          });
+    },
+
+       renderCityByTheUrl(url,currentCity,date)
     {
 
         var self = this;
@@ -289,26 +343,6 @@
 
           });
 
-    },
-
-      renderCityByTheUrl(url,currentCity)
-    {
-
-        var self = this;
-
-            $.ajax({
-
-            url:"/WeatherController/getEachStationJSON",
-            type:"POST",
-            data:{url:url},
-            dataType:"json",
-            success:function(data)
-            {
-              self.refs['loadingBar'].show();
-              module().getSimpleGragh(data,self,null,7,"myChart",currentCity);               
-              self.refs["loadingBar"].hide();             
-            }
-          });
     },
 
       showPrevCalendar(e)
@@ -345,9 +379,7 @@
     },
 
     showNextCalendar(e)
-    {
-
-        
+    {        
         var self = this;
         var todayDate = new Date().getDate();
          
@@ -394,14 +426,110 @@
 
         if(todayDate==parsedDate)
         {           
-            this.renderCityByTheUrl(this.state.url);
+            this.renderCityByUrl(this.state.url);
         }
        else
         {              
             var ran = parsedDate % 9;
-            this.renderCityByUrl(this.state.dummyDATAURL[ran],currentCity,date);
+            this.renderCityByTheUrl(this.state.dummyDATAURL[ran],currentCity,date);
         } 
     },     
+
+     handleChange(e)
+    {
+        var value = e.target.value;        
+
+        this.updateRadio(value);
+
+        var data = [];
+
+        if(value=="_temp")
+        {
+           data = this.state._temp_arr;
+        }
+
+        if(value=="_hum")
+        {
+           data = this.state._hum_arr;           
+        }
+
+        if(value=="_wind")
+        {
+           data = this.state._wind_arr;
+        }
+
+        if(value=="_pressure")
+        {
+           data = this.state._pressure_arr;
+        }
+
+        if(value=="_cloud")
+        {
+           data = this.state._cloud_arr; 
+                          
+        }
+
+        module2().getSimpleGragh(null,value,"myChart",data,this.state._label_arr);
+    },  
+
+     updateRadio(value)
+    {
+        if(value=="_temp")
+        {
+            this.setState({
+               _temp:true,
+               _hum:false,
+               _wind:false,
+               _pressure:false,
+               _cloud:false,
+               _value:"_temp"
+            })            
+        }
+      else if(value=="_cloud")
+      {
+            this.setState({
+               _temp:false,
+               _hum:false,
+               _wind:false,
+               _pressure:false,
+               _cloud:true,
+               _value:"_cloud"
+            })
+      }   
+      else if(value=="_hum")
+      {
+            this.setState({
+               _temp:false,
+               _hum:true,
+               _wind:false,
+               _pressure:false,
+               _cloud:false,
+               _value:"_hum"
+            })
+      }   
+      else if(value=="_pressure")
+      {
+            this.setState({
+               _temp:false,
+               _hum:false,
+               _wind:false,
+               _pressure:true,
+               _cloud:false,
+               _value:"_pressure"
+            })
+      }   
+      else if(value=="_wind")
+      {
+            this.setState({
+               _temp:false,
+               _hum:false,
+               _wind:true,
+               _pressure:false,
+               _cloud:false,
+               _value:"_wind"
+            })
+      }   
+    },
         render()
       
       {
@@ -433,7 +561,8 @@
                 <button type="button" onClick={this.showNextCalendar} className="btn btn-default favouriteRightButton" aria-label="Left Align">Forecasts
                 <span className="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
                 </button>
-
+                <div className="detailsWrapper">  
+                <div className="ChartDetails">
                  <p className="date">{this.state.date} <span className="time">{this.state.time}</span></p> 
 
                  <p className="summary">
@@ -483,6 +612,28 @@
                   })()} 
                  </p> 
               </div>
+
+                 <div className="viewPanel2">
+                     <div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._temp} onChange={this.handleChange} value="_temp" name="viewPanel2"/>Apprent Temperature</label>
+                        </div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._hum} onChange={this.handleChange} value="_hum" name="viewPanel2"/>Humidity</label>
+                        </div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._wind} onChange={this.handleChange} value="_wind" name="viewPanel2"/>Wind</label>
+                        </div>
+                         <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._cloud} onChange={this.handleChange} value="_cloud" name="viewPanel2"/>Cloud</label>
+                        </div>
+                        <div className="radio">
+                          <label><input className="radioView" type="radio" checked={this.state._pressure} onChange={this.handleChange} value="_pressure" name="viewPanel2"/>Pressure</label>
+                        </div>                       
+                     </div>
+                 </div>
+                 </div>
+                 </div>
               <canvas id="myChart" width="570" height="330"></canvas>
           </div>
           
@@ -1205,7 +1356,6 @@
             _pressure:false 
           });     
 
-
           this.renderCityByUrl(url,info,city);
 
           setTimeout(function(){
@@ -1239,63 +1389,35 @@
               self.refs["loadingBar"].hide();               
             }
            
-          });   
-           this.setState({
-               _temp:true,
-               _hum:false,
-               _wind:false,
-               _pressure:false,
-               _cloud:false,
-               _value:"_temp"
-            })
+          });         
 
           }else{    
          
           self.refs['loadingBar'].show();        
-           if(value=="_temp")
-              {
-                 data = this.state._temp_arr;   
-                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);              
-              }else if(value=="_hum")
-              {
-                 data = this.state._hum_arr; 
-                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);                 
-              }else if(value=="_wind")
-              {
-                 data = this.state._wind_arr; 
-                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);               
-              }else if(value=="_pressure")
-              {
-                 data = this.state._pressure_arr; 
-                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);                 
-              }else if(value=="_cloud")
-              {
-                 data = this.state._cloud_arr; 
-                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);                                      
-              }else{
+           
+              $.ajax({
 
-               $.ajax({
-
-              url:"/WeatherController/getEachStationJSON",
-              type:"POST",
-              data:{url:url},
-              dataType:"json",
-              success:function(data)
-              {            
-                self.refs['loadingBar'].show();
-                var newObject;
-                newObject = module2().parseData(data);               
-                 module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],50,"CityDetailChart");               
-                self.refs["loadingBar"].hide();                    
-              }   
-
-               });
-
-
-              }
-              
-            self.refs["loadingBar"].hide();
-          
+                url:"/WeatherController/getEachStationJSON",
+                type:"POST",
+                data:{url:url},
+                dataType:"json",
+                success:function(data)
+                {            
+                  self.refs['loadingBar'].show();
+                  var newObject;
+                  newObject = module2().parseData(data);               
+                   module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],50,"CityDetailChart");               
+                  self.refs["loadingBar"].hide();                    
+                }   
+              });
+             this.setState({
+                  _temp:true,
+                  _hum:false,
+                  _wind:false,
+                  _cloud:false,
+                  _pressure:false
+              })           
+            self.refs["loadingBar"].hide();          
          }
       },   
 
@@ -1306,6 +1428,7 @@
 
         if(info == "BOM")
         {   
+            $(".viewPanel").css("display","none");
             $.ajax({
             url:"/WeatherController/getEachStationJSON",
             type:"POST",
@@ -1350,8 +1473,8 @@
               }         
             }
           });
-          }else{
-
+          }else if (info == "Forecast.io"){
+          $(".viewPanel").css("display","inline");
           $.ajax({
             url:"/WeatherController/getEachStationJSON",
             type:"POST",
@@ -1403,7 +1526,61 @@
               }          
             }
           });
-          }       
+          }else{
+           $(".viewPanel").css("display","none");
+           $.ajax({
+            url:"/WeatherController/getEachStationJSON",
+            type:"POST",
+            data:{url:url},
+            dataType:"json",
+            success:function(data)
+            {
+              if($("#cityDetailsWrapper").css("opacity")!="0.3")
+              {    
+                    var wrapper = $("<div id='cityDetailsWrapper'></div>");
+                    wrapper.css({
+
+                       width:$(window).width(),
+                       height:$(window).height(),
+                       position:"absolute",
+                       background:"#9C9C9C",
+                       top:0,
+                       left:0,
+                       opacity:"0.3",
+
+                    });
+
+                     wrapper.css("z-index",10);
+
+                     $(document.body).append(wrapper.fadeIn());
+              }
+
+              $("#CityChartWrapper").show(); 
+
+              self.refs['loadingBar'].show();  
+
+              var newObject;
+
+              newObject = module2().parseData(data);          
+
+              module2().getSimpleGragh(city,newObject,self,null,50,"CityDetailChart",currentCity);
+              self.refs['loadingBar'].hide();
+ 
+              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);            
+
+              $('#cityDetailsWrapper').on("click",closeBackGround);
+
+              function closeBackGround(e)
+              {
+                  e.preventDefault();
+
+                  $("#CityChartWrapper").hide();
+                  $("#cityDetailsWrapper").remove();  
+              }          
+            }
+          });
+          }
+               
     },
 
      renderCityByTheUrl(url,info,city,currentCity,date)
@@ -1653,13 +1830,12 @@
 
         if(todayDate==parsedDate)
         {
-            this.renderCityByUrl(this.state.url,this.state.info,this.state.city);
-            $("#loginUser").html(this.state.info);
+            this.renderCityByUrl(this.state.url,this.state.info,this.state.city);          
         }
        else
         {  
             var ran = parsedDate % 9;
-            this.renderCityByTheUrl(this.state.dummyDATAURL[ran],currentCity,date);
+            this.renderCityByTheUrl(this.state.dummyDATAURL[ran],this.state.info,this.state.city,currentCity,date);
         } 
     },
     
