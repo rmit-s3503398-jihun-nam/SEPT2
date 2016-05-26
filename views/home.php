@@ -975,8 +975,7 @@
                   }
               }
             })
-       }
-       
+       }       
     },
  
     render()
@@ -1001,7 +1000,7 @@
    } 
       return(
 
-        <div>
+<div>
 <nav className="navbar navbar-default navbar-static-top">
   <div className="container">
   <div id="loginUser"></div>   
@@ -1019,9 +1018,7 @@
     <span className="caret"></span>
     <span className="sr-only">Toggle Dropdown</span>
   </button>
-
   {dropMenu}
-
 </div>
  
 
@@ -1057,11 +1054,10 @@
              </div>
           </div>                  
         </div>
-
-          <div id="stateModal" className="modal fade" role="dialog">
-            <div className="modal-dialog">
+        <div id="stateModal" className="modal fade" role="dialog">
+          <div className="modal-dialog">
                 
-                <div id='city_view_detail'><RenderCity CallFavouriteComponent={this.CallFavouriteComponent} ref="CityComponent"/></div>
+           <div id='city_view_detail'><RenderCity CallFavouriteComponent={this.CallFavouriteComponent} ref="CityComponent"/></div>
 
               <div className="modal-content">
                 <div className="modal-header">
@@ -1076,7 +1072,6 @@
                   <button type="button" className="btn btn-default" data-dismiss="modal">Close</button>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
@@ -1090,9 +1085,7 @@
     addToFavourite(dataObj)
     {
         $(".myFavouritesWrapper").css("display","block");
-
         var myFavourites = this.state.myFavourites;
-
         myFavourites.push(dataObj);
 
         this.setState({
@@ -1105,9 +1098,7 @@
         this.setState({
           myFavourites:[]
         });
-
         $(".myFavouritesWrapper").css("display","none");
-
     },  
 
     updateFavourites()
@@ -1183,11 +1174,9 @@
     renderCityDetail(e)
     {
           e.preventDefault();
-
           var url = e.target.id;   
           var city = e.target.name;           
           var self = this;      
-
           var bom = url.indexOf("bom.gov.au");
           var forecast = url.indexOf("api.forecast.io");
           var openweather = url.indexOf("openweathermap.org");
@@ -1220,11 +1209,8 @@
           this.renderCityByUrl(url,info,city);
 
           setTimeout(function(){
-
             $('.myFavouritesUL').slideUp();
-
-          },1500);
- 
+          },1500); 
     },
 
       refreshDetail(e)
@@ -1252,10 +1238,64 @@
               module().getSimpleGragh(data,self,self.refs["loadingBar"],50,"CityDetailChart"); 
               self.refs["loadingBar"].hide();               
             }
-
+           
           });   
+           this.setState({
+               _temp:true,
+               _hum:false,
+               _wind:false,
+               _pressure:false,
+               _cloud:false,
+               _value:"_temp"
+            })
 
-        
+          }else{    
+         
+          self.refs['loadingBar'].show();        
+           if(value=="_temp")
+              {
+                 data = this.state._temp_arr;   
+                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);              
+              }else if(value=="_hum")
+              {
+                 data = this.state._hum_arr; 
+                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);                 
+              }else if(value=="_wind")
+              {
+                 data = this.state._wind_arr; 
+                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);               
+              }else if(value=="_pressure")
+              {
+                 data = this.state._pressure_arr; 
+                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);                 
+              }else if(value=="_cloud")
+              {
+                 data = this.state._cloud_arr; 
+                 module2().getSimpleGragh(null,value,"CityDetailChart",data,this.state._label_arr);                                      
+              }else{
+
+               $.ajax({
+
+              url:"/WeatherController/getEachStationJSON",
+              type:"POST",
+              data:{url:url},
+              dataType:"json",
+              success:function(data)
+              {            
+                self.refs['loadingBar'].show();
+                var newObject;
+                newObject = module2().parseData(data);               
+                 module2().getSimpleGragh(cityname,newObject,self,self.refs["loadingBar"],50,"CityDetailChart");               
+                self.refs["loadingBar"].hide();                    
+              }   
+
+               });
+
+
+              }
+              
+            self.refs["loadingBar"].hide();
+          
          }
       },   
 
@@ -1310,11 +1350,9 @@
               }         
             }
           });
-          }
+          }else{
 
-          if(info == "Forecast.io")
-          {
-            $.ajax({
+          $.ajax({
             url:"/WeatherController/getEachStationJSON",
             type:"POST",
             data:{url:url},
@@ -1365,66 +1403,10 @@
               }          
             }
           });
-          }
-
-          if(info == "OpenWeather")
-          {
-            $.ajax({
-            url:"/WeatherController/getEachStationJSON",
-            type:"POST",
-            data:{url:url},
-            dataType:"json",
-            success:function(data)
-            {
-              if($("#cityDetailsWrapper").css("opacity")!="0.3")
-              {    
-                    var wrapper = $("<div id='cityDetailsWrapper'></div>");
-                    wrapper.css({
-
-                       width:$(window).width(),
-                       height:$(window).height(),
-                       position:"absolute",
-                       background:"#9C9C9C",
-                       top:0,
-                       left:0,
-                       opacity:"0.3",
-
-                    });
-
-                     wrapper.css("z-index",10);
-
-                     $(document.body).append(wrapper.fadeIn());
-
-              }
-
-              $("#CityChartWrapper").show();      
-
-              self.refs['loadingBar'].show();  
-
-              var newObject;
-
-              newObject = module2().parseData(data);          
-
-              module2().getSimpleGragh(city,newObject,self,null,50,"CityDetailChart",currentCity);
-              self.refs['loadingBar'].hide();
- 
-              $(".cityInfoWrapper .closeButton").on("click",closeBackGround);              
-
-              $('#cityDetailsWrapper').on("click",closeBackGround);
-
-              function closeBackGround(e)
-              {
-                  e.preventDefault();
-
-                  $("#CityChartWrapper").hide();
-                  $("#cityDetailsWrapper").remove();  
-              }             
-            }
-          });
-        }
+          }       
     },
 
-     renderCityByTheUrl(url,currentCity,date)
+     renderCityByTheUrl(url,info,city,currentCity,date)
     {
 
         var self = this;
