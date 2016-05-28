@@ -69,7 +69,6 @@
                     dataLabels.push(data.observations.data[i].local_date_time);
                     airTemp.push(data.observations.data[i].air_temp);
                     apparentTemp.push(data.observations.data[i].apparent_t);
- 
 
                    }
                  else
@@ -101,7 +100,8 @@
                   max_temp:max_temp
                 });
 
- 
+      
+
 
               var weatherData = {
                   datasets: [
@@ -113,13 +113,28 @@
                           pointStrokeColor: "#fff",
                           pointHighlightFill: "#fff",
                           pointHighlightStroke: "rgba(151,187,205,1)",
+                      },
+                      {
+                          label: "Apparent Temp",
+                          fillColor: "rgba(151,187,205,0.2)",
+                          strokeColor: "rgba(122, 169, 70, 0.9)",
+                          pointColor: "rgba(122, 169, 70, 0.9)",
+                          pointStrokeColor: "#fff",
+                          pointHighlightFill: "#fff",
+                          pointHighlightStroke: "rgba(151,187,205,1)",
                       }
                   ]
               };
 
                     weatherData.labels = dataLabels;
                     weatherData.datasets[0].data = airTemp;
- 
+                    weatherData.datasets[1].data = apparentTemp;
+   
+
+               
+           
+
+
                 var canvas = document.getElementById(chartHolerName);
                 var context = canvas.getContext("2d");
                 window.myLineChart; 
@@ -136,10 +151,10 @@
 
 }
   };
-   
+
  
 
-  var module2 = function()
+ var module2 = function()
   {
 
       return {
@@ -186,8 +201,6 @@
                   "humidity":data.hourly.data[i].humidity,
                   "pressure":data.hourly.data[i].pressure,
                   "windSpeed":data.hourly.data[i].windSpeed
-
-
                   });
               }
 
@@ -228,7 +241,6 @@
 
     getSimpleGragh:function(cityname,data,reactObj,loadingBar,numberofData,chartHolerName,currentCity,viewPanel)
     {
-
           var graphData = [];
 
           if(cityname==null)
@@ -237,10 +249,10 @@
               chartHolerName = reactObj;
               graphData = loadingBar;
               var dataLabels = numberofData;
+
           }
         else
-          { 
-
+          {  
               if(data.observations.data.length>0)
               {
  
@@ -250,7 +262,7 @@
                 var city = cityname;
                 var state = header.state;
                 var cloudy = header.cloud==undefined?"":header.cloud;
-				        var summary = header.summary==undefined?"":header.summary;
+				var summary = header.summary==undefined?"":header.summary;
                 var humidity = header.rel_hum;
                 var temp = header.air_temp;
                 var wind = header.wind_spd_kmh;
@@ -283,13 +295,19 @@
                    }
 
                     if(totalDataLength>totalNumberOfData && chartHolerName == "myChart")
-                    {
+                    {	
+					
 
                       if(i%dataInterval==0)
-                      {
+                      {				  
+					  
                           dataLabels.push(data.observations.data[i].local_date_time);
                           graphData.push(data.observations.data[i].air_temp);
                           apparentTemp.push(data.observations.data[i].apparent_t);
+						  humidity_arr.push(data.observations.data[i].humidity);
+						  wind_arr.push(data.observations.data[i].windSpeed);
+						  clouds.push(data.observations.data[i].cloudCover);
+						  pressures.push(data.observations.data[i].pressure);
                       }
 
                     }
@@ -299,8 +317,6 @@
 
                    if((localTime == DATE) || (localTime=="0"))
                    {
-
-
                        localTime = data.observations.data[i].local_date_time.substring(0,data.observations.data[i].local_date_time.indexOf("/"));
 
                     dataLabels.push(data.observations.data[i].local_date_time);
@@ -310,7 +326,6 @@
                     wind_arr.push(data.observations.data[i].windSpeed);
                     clouds.push(data.observations.data[i].cloudCover);
                     pressures.push(data.observations.data[i].pressure);
-
 
                    }
                  else
@@ -328,7 +343,7 @@
                    date = null;
                }
  
-              if(chartHolerName=="CityDetailChart")
+              if(chartHolerName=="CityDetailChart" || "myChart")
               {
 
                   reactObj.setState({
@@ -349,8 +364,6 @@
                     _cloud_arr:clouds,
                     _pressure_arr:pressures,
                     _label_arr:dataLabels
-
-
                   });
 
               }
@@ -389,7 +402,7 @@
                       }
                   ]
               };
- 
+
                     weatherData.labels = dataLabels;
                     weatherData.datasets[0].data = graphData;
  
@@ -412,7 +425,6 @@
 
 }
   }
-
  
 
   
